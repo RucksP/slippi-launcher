@@ -98,7 +98,7 @@ export class IniFile {
   /**Differs from IniFile.cpp by:
    * returns lines instead of passing it by reference
    */
-  public getLines(section_name: string, remove_comments: boolean): string[] {
+  public getLines(section_name: string, remove_comments = false): string[] {
     const section = this.getSection(section_name);
     if (section === undefined) {
       return [];
