@@ -22,7 +22,7 @@ export class IniFile {
     let retValueOut: string | null = null;
     let keyOut: string | null = null;
 
-    if (line === "" || line[0] == "#") {
+    if (line === "" || line[0] === "#") {
       return [null, null];
     }
 
@@ -42,14 +42,14 @@ export class IniFile {
    * returns section object, not pointer
    */
   public getSection(section_name: string): Section | undefined {
-    const section = this.sections.find((section) => section.name == section_name);
+    const section = this.sections.find((section) => section.name === section_name);
     return section;
   }
 
   /**Differs from IniFile.cpp by:
    * returns section object, not pointer
    */
-  public getOrCreateSection(section_name: string): Section | undefined {
+  public getOrCreateSection(section_name: string): Section {
     let section = this.getSection(section_name);
     if (section === undefined) {
       section = new Section(section_name);
@@ -73,7 +73,7 @@ export class IniFile {
 
   public setLines(section_name: string, lines: string[]): void {
     const section = this.getOrCreateSection(section_name);
-    section?.setLines(lines);
+    section.setLines(lines);
   }
 
   public deleteKey(section_name: string, key: string): boolean {
@@ -128,7 +128,7 @@ export class IniFile {
     for await (let line of rl) {
       //console.log(line);
       // Skips the UTF-8 BOM at the start of files. Notepad likes to add this.
-      if (first_line && line.substr(0, 3) == "\xEF\xBB\xBF") {
+      if (first_line && line.substr(0, 3) === "\xEF\xBB\xBF") {
         line = line.slice(3);
       }
       first_line = false;
@@ -153,8 +153,8 @@ export class IniFile {
           // Kind of a hack, but the support for raw lines inside an
           // INI is a hack anyway.
           if (
-            (key == null && value == null) ||
-            (line.length !== 0 && (line[0] == "$" || line[0] == "+" || line[0] == "*"))
+            (key === null && value === null) ||
+            (line.length !== 0 && ["$", "+", "*"].some((val) => line[0] === val))
           ) {
             current_section.m_lines.push(line);
           } else if (key !== null && value2 !== null) {
@@ -180,7 +180,7 @@ export class IniFile {
       // that goes against our use case
       out.write(`[${section.name}]\n`);
 
-      if (section.keys_order.length == 0) {
+      if (section.keys_order.length === 0) {
         section.m_lines.forEach((line) => {
           out.write(`${line}\n`);
         });
