@@ -6,6 +6,7 @@ import { fileExists } from "main/fileExists";
 import os from "os";
 import path from "path";
 
+import { GeckoCode, loadGeckoCodes, saveCodes } from "./geckoCode";
 import { IniFile } from "./iniFile";
 import { DolphinLaunchType } from "./types";
 
@@ -119,4 +120,42 @@ export async function addGamePathToIni(type: DolphinLaunchType, gameDir: string)
   }
   iniFile.save(iniPath);
   log.info(`Finished updating ${type} dolphin...`);
+}
+
+export async function updateOnlineBoot(enable = false) {
+  const userPath = await findUserFolder(DolphinLaunchType.NETPLAY);
+  const iniPath = path.join(userPath, "GameSettings", "GALE01.ini");
+  await bootToCSS(iniPath, enable);
+}
+
+async function bootToCSS(gameSettingsPath: string, enable: boolean) {
+  const iniFile = new IniFile();
+  if (await fs.pathExists(gameSettingsPath)) {
+    log.info(`found ini file: ${gameSettingsPath}`);
+    await iniFile.load(gameSettingsPath);
+    log.info(iniFile.getSection("Gecko"));
+  }
+
+  const geckoCodes = loadGeckoCodes(iniFile);
+
+  log.info(geckoCodes[0]);
+
+  const bootCodeIdx = geckoCodes.findIndex((code) => code.name === "Boot to CSS");
+
+  if (bootCodeIdx === -1) {
+    const bootToCssCode: GeckoCode = {
+      codeLines: ["041BFA20 38600002"],
+      creator: "Dan Salvato, Achilles",
+      defaultEnabled: false,
+      enabled: enable,
+      name: "Boot to CSS ",
+      notes: ["Memory card data is loaded."],
+      userDefined: true,
+    };
+    geckoCodes.push(bootToCssCode);
+  } else {
+    geckoCodes[bootCodeIdx].enabled = enable;
+  }
+
+  saveCodes(iniFile, geckoCodes);
 }
