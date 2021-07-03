@@ -155,7 +155,7 @@ async function bootToCSS(globalIniPath: string, localIniPath: string, enable: bo
       defaultEnabled: false,
       enabled: enable,
       name: "Boot to CSS ",
-      notes: ["Memory card data is loaded."],
+      notes: [],
       userDefined: true,
     };
     geckoCodes.push(bootToCssCode);
