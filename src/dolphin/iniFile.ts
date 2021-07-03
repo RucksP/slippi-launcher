@@ -167,8 +167,8 @@ export class IniFile {
     return true;
   }
 
-  public save(fileName: string): boolean {
-    const out = fs.createWriteStream(fileName);
+  public save(filePath: string): boolean {
+    const out = fs.createWriteStream(filePath);
 
     out.on("error", (e) => {
       console.log("failed to write file with error", e);
@@ -176,8 +176,8 @@ export class IniFile {
     });
 
     this.sections.forEach((section) => {
-      // originally section.name was only written if the section was non-empty, but I think
-      // that goes against our use case
+      // originally section.name was only written if the section was non-empty,
+      // but that goes against us wanting to always show the Gecko section
       out.write(`[${section.name}]\n`);
 
       if (section.keys_order.length === 0) {
@@ -230,19 +230,14 @@ export class Section {
 
   //TODO work around pass by reference
   // no idea what default value is for
-  public get(key: string, default_value: string): string | undefined {
-    let value = this.values.get(key);
+  public get(key: string, default_value: string): string {
+    const value = this.values.get(key);
 
     if (value !== undefined) {
       return value;
     }
 
-    if (default_value != null) {
-      value = default_value;
-      return value;
-    }
-
-    return undefined;
+    return default_value;
   }
 
   public exists(key: string): boolean {
