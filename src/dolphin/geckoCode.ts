@@ -91,7 +91,7 @@ function _readEnabledOrDisabled(iniFile: IniFile, section: string, enabled: bool
     const codeName = line.slice(1);
 
     codes.forEach((code) => {
-      if (codeName === code.name) {
+      if (codeName.trim() === code.name.trim()) {
         code.enabled = enabled;
       }
     });
