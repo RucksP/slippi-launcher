@@ -84,7 +84,7 @@ function _readEnabledOrDisabled(iniFile: IniFile, section: string, enabled: bool
   const lines = iniFile.getLines(section);
 
   lines.forEach((line) => {
-    if (line.length == 0 || line[0] != "$") {
+    if (line.length === 0 || line[0] !== "$") {
       return;
     }
 
@@ -129,7 +129,7 @@ export function saveCodes(iniFile: IniFile, codes: GeckoCode[]) {
   const disabledLines: string[] = [];
 
   codes.forEach((code) => {
-    if (code.enabled != code.defaultEnabled) {
+    if (code.enabled !== code.defaultEnabled) {
       (code.enabled ? enabledLines : disabledLines).push("$" + code.name);
     }
     _makeGeckoCode(code, lines);
