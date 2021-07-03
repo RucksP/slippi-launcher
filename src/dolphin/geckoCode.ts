@@ -18,7 +18,7 @@ export function loadGeckoCodes(globalIni: IniFile, localIni?: IniFile): GeckoCod
       return;
     }
     const lines: string[] = ini.getLines("Gecko", false).filter((line) => {
-      return line.length === 0 || line[0] === "#";
+      return line.length !== 0 || line[0] !== "#";
     });
     let gcode: GeckoCode = {
       name: "",
@@ -123,7 +123,7 @@ function _makeGeckoCode(code: GeckoCode, lines: string[]) {
   code.codeLines.forEach((line) => lines.push(line));
 }
 
-export function SaveCodes(iniFile: IniFile, codes: GeckoCode[]) {
+export function saveCodes(iniFile: IniFile, codes: GeckoCode[]) {
   const lines: string[] = [];
   const enabledLines: string[] = [];
   const disabledLines: string[] = [];

@@ -109,7 +109,7 @@ export class IniFile {
     return lines;
   }
 
-  public async load(fileName: string, keep_current_data: boolean): Promise<boolean> {
+  public async load(fileName: string, keep_current_data = true): Promise<boolean> {
     if (!keep_current_data) {
       this.sections = [];
     }
@@ -146,8 +146,7 @@ export class IniFile {
         }
       } else {
         if (current_section !== undefined) {
-          let value;
-          const [key, value2] = this.parseLine(line);
+          const [key, value] = this.parseLine(line);
 
           // Lines starting with '$', '*' or '+' are kept verbatim.
           // Kind of a hack, but the support for raw lines inside an
@@ -157,8 +156,8 @@ export class IniFile {
             (line.length !== 0 && ["$", "+", "*"].some((val) => line[0] === val))
           ) {
             current_section.m_lines.push(line);
-          } else if (key !== null && value2 !== null) {
-            current_section.set(key, value2);
+          } else if (key !== null && value !== null) {
+            current_section.set(key, value);
           }
         }
       }
