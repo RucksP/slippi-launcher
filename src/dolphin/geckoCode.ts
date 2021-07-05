@@ -68,7 +68,7 @@ export function loadGeckoCodes(globalIni: IniFile, localIni?: IniFile): GeckoCod
 
     //update enabled flags
 
-    _readEnabledAndDisabled(ini, gcodes);
+    readEnabledAndDisabled(ini, gcodes);
 
     //set default enabled
     if (ini === globalIni) {
@@ -80,7 +80,7 @@ export function loadGeckoCodes(globalIni: IniFile, localIni?: IniFile): GeckoCod
   return gcodes;
 }
 
-function _readEnabledOrDisabled(iniFile: IniFile, section: string, enabled: boolean, codes: GeckoCode[]) {
+function readEnabledOrDisabled(iniFile: IniFile, section: string, enabled: boolean, codes: GeckoCode[]) {
   const lines = iniFile.getLines(section);
 
   lines.forEach((line) => {
@@ -98,12 +98,12 @@ function _readEnabledOrDisabled(iniFile: IniFile, section: string, enabled: bool
   });
 }
 
-function _readEnabledAndDisabled(iniFile: IniFile, codes: GeckoCode[]) {
-  _readEnabledOrDisabled(iniFile, "Gecko_Enabled", true, codes);
-  _readEnabledOrDisabled(iniFile, "Gecko_Disabled", true, codes);
+function readEnabledAndDisabled(iniFile: IniFile, codes: GeckoCode[]) {
+  readEnabledOrDisabled(iniFile, "Gecko_Enabled", true, codes);
+  readEnabledOrDisabled(iniFile, "Gecko_Disabled", true, codes);
 }
 
-function _makeGeckoCodeTitle(code: GeckoCode): string {
+function makeGeckoCodeTitle(code: GeckoCode): string {
   const title = `$${code.name}`;
   if (code.creator !== null && code.creator.length > 0) {
     return `${title} [${code.creator}]`;
@@ -111,12 +111,12 @@ function _makeGeckoCodeTitle(code: GeckoCode): string {
   return title;
 }
 
-function _makeGeckoCode(code: GeckoCode, lines: string[]) {
+function makeGeckoCode(code: GeckoCode, lines: string[]) {
   if (!code.userDefined) {
     return;
   }
 
-  lines.push(_makeGeckoCodeTitle(code));
+  lines.push(makeGeckoCodeTitle(code));
 
   code.notes.forEach((line) => lines.push(line));
 
@@ -132,7 +132,7 @@ export function saveCodes(iniFile: IniFile, codes: GeckoCode[]) {
     if (code.enabled !== code.defaultEnabled) {
       (code.enabled ? enabledLines : disabledLines).push("$" + code.name);
     }
-    _makeGeckoCode(code, lines);
+    makeGeckoCode(code, lines);
   });
 
   iniFile.setLines("Gecko", lines);
