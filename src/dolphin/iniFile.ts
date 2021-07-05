@@ -3,6 +3,7 @@
  * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Common/IniFile.cpp
  */
 
+import log from "electron-log";
 import fs from "fs";
 import readline from "readline";
 
@@ -18,12 +19,12 @@ export class IniFile {
 
   /** Differs from IniFile.cpp via:
    * Instead of editing keyOut and valueOut by reference, return them */
-  public parseLine(line: string): Array<string | null> {
-    let retValueOut: string | null = null;
-    let keyOut: string | null = null;
+  private parseLine(line: string): readonly [string, string] | readonly [null, null] {
+    let retValueOut = "";
+    let keyOut = "";
 
     if (line === "" || line[0] === "#") {
-      return [null, null];
+      return [null, null] as const;
     }
 
     const firstEquals = line.indexOf("=");
@@ -35,14 +36,14 @@ export class IniFile {
         .replace(/['"]+/g, "");
     }
 
-    return [keyOut, retValueOut];
+    return [keyOut, retValueOut] as const;
   }
 
   /**Differs from IniFile.cpp by:
    * returns section object, not pointer
    */
-  public getSection(section_name: string): Section | undefined {
-    const section = this.sections.find((section) => section.name === section_name);
+  public getSection(sectionName: string): Section | undefined {
+    const section = this.sections.find((section) => section.name === sectionName);
     return section;
   }
 
@@ -87,12 +88,12 @@ export class IniFile {
   /**Differs from IniFile.cpp by:
    * returns keys instead of passing it by reference
    */
-  public getKeys(section_name: string): string[] | boolean {
+  public getKeys(section_name: string): string[] {
     const section = this.getSection(section_name);
     if (section === undefined) {
-      return false;
+      return [];
     }
-    return section.keys_order;
+    return section.keysOrder;
   }
 
   /**Differs from IniFile.cpp by:
@@ -116,8 +117,7 @@ export class IniFile {
 
     const ins = fs.createReadStream(fileName);
     ins.on("error", (e) => {
-      console.log("failed to read file with error", e);
-      alert(e);
+      log.error("failed to read file with error", e);
     });
     const rl = readline.createInterface({
       input: ins,
@@ -155,7 +155,7 @@ export class IniFile {
             (key === null && value === null) ||
             (line.length !== 0 && ["$", "+", "*"].some((val) => line[0] === val))
           ) {
-            current_section.m_lines.push(line);
+            current_section.lines.push(line);
           } else if (key !== null && value !== null) {
             current_section.set(key, value);
           }
@@ -170,8 +170,7 @@ export class IniFile {
     const out = fs.createWriteStream(filePath);
 
     out.on("error", (e) => {
-      console.log("failed to write file with error", e);
-      alert(e);
+      log.error("failed to write file with error", e);
     });
 
     this.sections.forEach((section) => {
@@ -179,13 +178,13 @@ export class IniFile {
       // but that goes against us wanting to always show the Gecko section
       out.write(`[${section.name}]\n`);
 
-      if (section.keys_order.length === 0) {
-        section.m_lines.forEach((line) => {
+      if (section.keysOrder.length === 0) {
+        section.lines.forEach((line) => {
           out.write(`${line}\n`);
         });
         out.write("\n");
       } else {
-        section.keys_order.forEach((kvit) => {
+        section.keysOrder.forEach((kvit) => {
           const value = section.values.get(kvit);
           out.write(`${kvit}=${value}\n`);
         });
@@ -205,14 +204,14 @@ export class IniFile {
  */
 export class Section {
   public name: string;
-  public keys_order: string[];
-  public m_lines: string[];
+  public keysOrder: string[];
+  public lines: string[];
   public values: Map<string, string>;
 
-  public constructor(_name: string) {
-    this.name = _name;
-    this.keys_order = [];
-    this.m_lines = [];
+  public constructor(name: string) {
+    this.name = name;
+    this.keysOrder = [];
+    this.lines = [];
     this.values = new Map();
   }
 
@@ -222,7 +221,7 @@ export class Section {
   public set(key: string, new_value: string): void {
     const newKey = !this.values.has(key);
     if (newKey) {
-      this.keys_order.push(key);
+      this.keysOrder.push(key);
     }
     this.values.set(key, new_value);
   }
@@ -243,17 +242,17 @@ export class Section {
     return this.values.get(key) !== undefined;
   }
 
-  public delete = (key: string): boolean => {
+  public delete(key: string): boolean {
     const success = this.values.delete(key);
-    if (!success) {
-      return false;
+    if (success) {
+      this.keysOrder.splice(this.keysOrder.indexOf(key), 1);
     }
-    this.keys_order.splice(this.keys_order.indexOf(key), 1);
-    return true;
-  };
+
+    return success;
+  }
 
   public setLines(lines: string[]): void {
-    this.m_lines = lines;
+    this.lines = lines;
   }
 
   /**Differs from IniFile.cpp by:
@@ -261,7 +260,7 @@ export class Section {
    */
   public getLines(remove_comments: boolean): string[] {
     const lines: string[] = [];
-    this.m_lines.forEach((line) => {
+    this.lines.forEach((line) => {
       //let stripped_line = stripSpace(line);
       if (remove_comments) {
         const commentPos = line.indexOf("#");
