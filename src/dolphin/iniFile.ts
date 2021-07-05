@@ -50,17 +50,17 @@ export class IniFile {
   /**Differs from IniFile.cpp by:
    * returns section object, not pointer
    */
-  public getOrCreateSection(section_name: string): Section {
-    let section = this.getSection(section_name);
+  public getOrCreateSection(sectionName: string): Section {
+    let section = this.getSection(sectionName);
     if (section === undefined) {
-      section = new Section(section_name);
+      section = new Section(sectionName);
       this.sections.push(section);
     }
     return section;
   }
 
-  public deleteSection(section_name: string): boolean {
-    const s = this.getSection(section_name);
+  public deleteSection(sectionName: string): boolean {
+    const s = this.getSection(sectionName);
     if (s === undefined) {
       return false;
     }
@@ -68,17 +68,17 @@ export class IniFile {
     return true;
   }
 
-  public exists(section_name: string): boolean {
-    return this.getSection(section_name) != undefined;
+  public exists(sectionName: string): boolean {
+    return this.getSection(sectionName) != undefined;
   }
 
-  public setLines(section_name: string, lines: string[]): void {
-    const section = this.getOrCreateSection(section_name);
+  public setLines(sectionName: string, lines: string[]): void {
+    const section = this.getOrCreateSection(sectionName);
     section.setLines(lines);
   }
 
-  public deleteKey(section_name: string, key: string): boolean {
-    const section = this.getSection(section_name);
+  public deleteKey(sectionName: string, key: string): boolean {
+    const section = this.getSection(sectionName);
     if (section === undefined) {
       return false;
     }
@@ -88,8 +88,8 @@ export class IniFile {
   /**Differs from IniFile.cpp by:
    * returns keys instead of passing it by reference
    */
-  public getKeys(section_name: string): string[] {
-    const section = this.getSection(section_name);
+  public getKeys(sectionName: string): string[] {
+    const section = this.getSection(sectionName);
     if (section === undefined) {
       return [];
     }
@@ -99,19 +99,19 @@ export class IniFile {
   /**Differs from IniFile.cpp by:
    * returns lines instead of passing it by reference
    */
-  public getLines(section_name: string, remove_comments = false): string[] {
-    const section = this.getSection(section_name);
+  public getLines(sectionName: string, removeComments = false): string[] {
+    const section = this.getSection(sectionName);
     if (section === undefined) {
       return [];
     }
 
-    const lines = section.getLines(remove_comments);
+    const lines = section.getLines(removeComments);
 
     return lines;
   }
 
-  public async load(fileName: string, keep_current_data = true): Promise<boolean> {
-    if (!keep_current_data) {
+  public async load(fileName: string, keepCurrentData = true): Promise<boolean> {
+    if (!keepCurrentData) {
       this.sections = [];
     }
 
@@ -123,29 +123,25 @@ export class IniFile {
       input: ins,
       terminal: false,
     });
-    let current_section = undefined;
-    let first_line = true;
+    let currentSection = undefined;
+    let firstLine = true;
     for await (let line of rl) {
-      //console.log(line);
       // Skips the UTF-8 BOM at the start of files. Notepad likes to add this.
-      if (first_line && line.substr(0, 3) === "\xEF\xBB\xBF") {
+      if (firstLine && line.substr(0, 3) === "\xEF\xBB\xBF") {
         line = line.slice(3);
       }
-      first_line = false;
+      firstLine = false;
 
       //section line
       if (line[0] === "[") {
-        //console.log(line, line[0]);
         const endpos = line.indexOf("]");
         if (endpos !== -1) {
           //we have a new section
           const sub = line.substr(1, endpos - 1);
-          //console.log(sub);
-          current_section = this.getOrCreateSection(sub);
-          //console.log(current_section);
+          currentSection = this.getOrCreateSection(sub);
         }
       } else {
-        if (current_section !== undefined) {
+        if (currentSection !== undefined) {
           const [key, value] = this.parseLine(line);
 
           // Lines starting with '$', '*' or '+' are kept verbatim.
@@ -155,9 +151,9 @@ export class IniFile {
             (key === null && value === null) ||
             (line.length !== 0 && ["$", "+", "*"].some((val) => line[0] === val))
           ) {
-            current_section.lines.push(line);
+            currentSection.lines.push(line);
           } else if (key !== null && value !== null) {
-            current_section.set(key, value);
+            currentSection.set(key, value);
           }
         }
       }
@@ -218,24 +214,24 @@ export class Section {
   /**Differs from IniFile.cpp by:
    * passes key by value rather than address
    */
-  public set(key: string, new_value: string): void {
+  public set(key: string, newValue: string): void {
     const newKey = !this.values.has(key);
     if (newKey) {
       this.keysOrder.push(key);
     }
-    this.values.set(key, new_value);
+    this.values.set(key, newValue);
   }
 
   //TODO work around pass by reference
   // no idea what default value is for
-  public get(key: string, default_value: string): string {
+  public get(key: string, defaultValue: string): string {
     const value = this.values.get(key);
 
     if (value !== undefined) {
       return value;
     }
 
-    return default_value;
+    return defaultValue;
   }
 
   public exists(key: string): boolean {
@@ -258,14 +254,17 @@ export class Section {
   /**Differs from IniFile.cpp by:
    * returns lines instead of passing it by reference
    */
-  public getLines(remove_comments: boolean): string[] {
+  public getLines(removeComments: boolean): string[] {
     const lines: string[] = [];
     this.lines.forEach((line) => {
-      //let stripped_line = stripSpace(line);
-      if (remove_comments) {
+      line = line.trim();
+      if (removeComments) {
         const commentPos = line.indexOf("#");
+        if (commentPos === 0) {
+          return;
+        }
         if (commentPos !== -1) {
-          //stripped_line = stripped_line.substring(0, commentPos);
+          line = line.substring(0, commentPos);
         }
       }
       if (line !== "\n" && line !== "") {
